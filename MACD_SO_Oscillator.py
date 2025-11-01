@@ -1,16 +1,21 @@
-# trading_strategy_backtest.py
-
-import yfinance as yf          # To download historical stock data
-import pandas as pd            # For data manipulation (tables, calculations)
-import numpy as np             # For numerical calculations (mean, std, etc.)
-import matplotlib.pyplot as plt # For plotting charts
+import yfinance as yf
+# gets data from yahoo finance
+import pandas as pd
+# for tables, calculations, etc.
+import numpy as np
+# for numerical calculations (mean, std, etc.)
+import matplotlib.pyplot as plt
+# for plotting charts
 
 def download_data(ticker, start, end):
+#define function to be called later
     """Download historical data from Yahoo Finance""" #called docstring, like comment at beginning of function but doesn't affect code
 # 3 quotations means you can write multi-line strings
     data = yf.download(ticker, start=start, end=end)
+# downloads ticker data from yahoo finanace
     if isinstance(data.columns, pd.MultiIndex):
         data.columns = [col[0] for col in data.columns]
+# ensures columns are just titled close, open, etc. Helps with references later on
     return data
 
 def MACD_Signal(data, short_window=50, long_window=200, signal_window=14):
@@ -21,20 +26,23 @@ def MACD_Signal(data, short_window=50, long_window=200, signal_window=14):
     data['EMA_short'] = data['Close'].ewm(span=short_window, adjust=False).mean()
     data['EMA_long'] = data['Close'].ewm(span=long_window, adjust=False).mean()
     data['MACD'] = data['EMA_short'] - data['EMA_long']
+    # makes MACD column which is just the short term avrage price - the long term average price
     data['Signal'] = data['MACD'].ewm(span=signal_window, adjust=False).mean()
+    # signal column is just an average of the MACD
     data['Histogram'] = data['MACD'] - data['Signal']
     return data
 
 # Parameters
-# Ask for user inputs
 ticker = input("Enter ticker (e.g. AAPL, MSFT, TSLA): ").upper()
 start = input("Enter start date (YYYY-MM-DD): ")
 end = input("Enter end date (YYYY-MM-DD): ")
+# asks user for imputs for the script
 
-# Run pipeline
-data = download_data(ticker, start, end)             # Step 1: Get data
+# Get Data
+data = download_data(ticker, start, end)
 
-data = MACD_Signal(data)                        # Step 2: Generate buy/sell signals
+data = MACD_Signal(data)
+# run MACD_Signal function defined above with the data from yahoo finance to generate all of the averages and signals
 # Plot
 plt.figure(figsize=(12, 6))
 
@@ -48,26 +56,33 @@ plt.plot(data['MACD'], label='MACD', color='purple')
 plt.plot(data['Signal'], label='Signal', color='orange')
 plt.bar(data.index, data['Histogram'], label='Histogram', color='gray')
 plt.legend()
+# the above makes three charts, one with just the prices, then with the MACD and Signal overlaying each other, and then the histogram showing the difference between MACD and the signal
 
 plt.tight_layout()
+# because you have multiple subplots, it just makes the whole thing look better
 plt.show()
 
 current_MACD = data['MACD'].iloc[-1] - data['Signal'].iloc[-1]
+# .iloc[-1] looks at the last data point
 if current_MACD > 0:
     print("\nMACD shows stock has bullish momentum")
 elif current_MACD < 0:
     print("\nMACD shows stock has bearish momentum")
 else:
     yesterday_MACD = data['MACD'].iloc[-2] - data['Signal'].iloc[-2]
+    # .iloc[-2] looks at the second last data point
     if yesterday_MACD < 0:
         print("\nMACD shows stock is starting an upward trend")
     else:
         print("\nMACD shows stock is starting a downward trend")
+# rationale behind each of the above outlined in Readme
 
 #Stochastic Oscillator
 def Stochastic_Oscillator(data, fortnight=14, half_week = 3):
     data["Fortnight_High"] = data["Close"].rolling(fortnight).max()
+    # finds the higest price in the last two weeks
     data["Fortnight_Low"] = data["Close"].rolling(fortnight).min()
+    # finds the lowest price in the last two weeks
     data["K%"] = (data["Close"] - data["Fortnight_Low"])/(data["Fortnight_High"] - data["Fortnight_Low"])
     data["%D"] = data["Close"].rolling(half_week).mean()
     return data
@@ -81,3 +96,4 @@ elif current_SO > 0.8:
     print("\nStochastic Oscillator shows sell stock")
 else:
     print("\nStochastic Oscillator shows hold stock")
+#rationale for all of the above in the Readme
