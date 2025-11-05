@@ -23,7 +23,7 @@ While the signal is the average of the MACD, and it is like a "trigger", it indi
 
 The stochastic oscillator indicates whether a stock should be bought, sold or held.
 
-It starts with the %K calculation, which is just the current closing price minus the lowest closing price in a recent short term window (the code just uses 14 days), all divided by the hughest closing price in a recent short term window minus the lowest closing price in a recent short term window.
+It starts with the %K calculation, which is just the current closing price minus the lowest closing price in a recent short term window (the code just uses 14 days), all divided by the highest closing price in a recent short term window minus the lowest closing price in a recent short term window.
 
 Then there is the %D calculation which is just a 3-day moving average of the %K calculation.
 
